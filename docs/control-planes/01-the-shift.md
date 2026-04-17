@@ -81,6 +81,20 @@ When something does get through, it's almost always the guardrail: too vague, no
 
 This is the same pattern good engineering teams use. The difference is that an LLM actually reads the docs.
 
+## Documentation as partnership
+
+The control plane only works if it's treated like code — written, generated, reviewed, refined. Authored once and frozen, it rots. Only generated, it has no judgement in it. The model that holds up is partnership: machines generate what mirrors the code, humans curate and augment what doesn't, and corrections flow back into the docs themselves.
+
+That partnership splits naturally across three layers:
+
+- **Generated** — anything that mirrors the source (APIs, models, dependencies, env vars). Re-extract on cadence; the code is the source of truth.
+- **Synthesised** — higher-level reads of the same source (what this service does, how it fits). Generated, but invites a human pass to correct framing the LLM can't see.
+- **Curated** — anything that lives only in human heads (gotchas, deprecated paths that still bite, decisions and their reasons). Doesn't exist anywhere else until someone writes it down.
+
+The feedback loop matters as much as the layers. When a correction lands in a conversation, when an extraction surfaces something stale, when a debugging session reveals a hidden constraint — the learning has to flow back into the control plane, or it dies where it was discovered. A PR against the conventions doc, a one-line annotation, an ADR for anything load-bearing — the mechanism varies; what matters is that one exists and is cheap enough to use.
+
+Without that loop, the control plane is a snapshot. With it, it gets sharper every week.
+
 ## Human in the loop — but as a partner
 
 There's a spectrum of how people work with LLMs:

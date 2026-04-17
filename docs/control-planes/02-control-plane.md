@@ -50,29 +50,34 @@ Use whatever notation your team understands. The [C4 model](https://c4model.com)
 
 Each diagram is a Markdown file with a diagram (Mermaid, PlantUML, or just ASCII boxes) and a few paragraphs of explanation.
 
-### 3. Conventions
+### 3. The curated layer — annotations, conventions, anti-patterns, ADRs
 
-A single `conventions.md` that defines:
-- Language and framework versions
-- Directory structure expectations
-- Naming patterns
-- Testing requirements
-- How to handle errors, logging, configuration
-- What goes in a commit message
-- PR process
+This is everything the humans write, that generation can't infer. It isn't one file — it's a tier of artefacts with different weight and a graduation path between them.
 
-Be specific. "Write good tests" is useless. "Every public function has at least one happy-path test and one error-path test, using the Arrange-Act-Assert pattern" is a guardrail.
+| Layer | Shape | When to use it |
+|-------|-------|----------------|
+| **Annotation** | One-liner with author and date. Lives near the thing it describes. | A specific gotcha or observation. Not yet a pattern. *"This webhook silently retries after 3 failures."* |
+| **Convention** | Short prescriptive rule. Lives in `conventions.md`. | A settled "we do it this way" that should apply across the project. *"Every public function has a happy-path and an error-path test."* |
+| **Anti-pattern** | Short proscriptive rule with reason. Lives in `conventions.md` (an "Avoid" section) or its own `anti-patterns.md`. | A trap worth naming, where the wrong thing looks reasonable. *"Don't catch and rethrow without preserving context — we lose the original stack and spent two days last quarter chasing a ghost."* |
+| **ADR** | Context / Decision / Consequences. Lives in `docs/adr/`. | A decision weighty enough that you'd otherwise re-debate it. Captures the trade-offs so the next person doesn't relitigate the same ground. |
 
-### 4. Decision records
+**Conventions** cover the usual ground: language and framework versions, directory layout, naming, testing requirements, error handling, logging, configuration, commit messages, PR process. Be specific. *"Write good tests"* is useless. *"Every public function has at least one happy-path test and one error-path test, using Arrange-Act-Assert"* is a guardrail.
 
-Architecture Decision Records (ADRs) capture **why** you chose what you chose. They're short documents with:
-- Context (what's the situation)
-- Decision (what we chose)
-- Consequences (what follows from the choice)
+**Anti-patterns** carry the reason on their face. The reason is what makes them stick — *"don't X because we got burned by Y"* is harder to forget than *"don't X."* The LLM (and the next human) needs the why or the rule will be quietly relitigated.
 
-These are invaluable for LLMs. Without them, the assistant might suggest an approach you've already considered and rejected. With them, it understands the constraints.
+**ADRs** aren't bigger conventions — they're conventions plus the trade-off history. Reserve them for the decisions that cost real time to re-derive: tech stack choices, framework selections, security boundaries, anything where someone in six months will ask *"why did we do it that way?"* and the wrong answer will be expensive.
 
-### 5. repos.conf — the project registry
+#### The graduation flow
+
+- An **annotation** is the cheapest thing you can write — one line, no template, no review. Use freely. When the same annotation surfaces in a third conversation, it's not an annotation anymore.
+- **Promote** it to a convention (if it's *"do this"*) or an anti-pattern (if it's *"don't do this"*). It has earned its keep as a pattern.
+- When a convention becomes **contested or load-bearing** — someone is about to break it deliberately, or the decision behind it would cost a week to re-derive — promote it to an ADR.
+
+The reverse matters too. A convention that no longer fires (no one breaks it, no one references it, the framework now enforces it) can be retired. Stale conventions are worse than no conventions.
+
+The friction is deliberate. Annotations are cheap because most learnings are discovered in flight and need somewhere to land. ADRs are expensive because the heavy ones earn their friction. Conventions and anti-patterns sit in between — light enough that the team writes them, heavy enough that they're treated as binding.
+
+### 4. repos.conf — the project registry
 
 For multi-project setups, a `repos.conf` file lists every child repository the control plane manages. It's a plain text file, one repo per line:
 
@@ -92,7 +97,7 @@ This file is the single source of truth for "what repos exist in this system." T
 
 Use comments (`#`) to group repos by concern — public vs private, core vs supporting, services vs libraries. The grouping is for humans; the tooling treats every uncommented line the same.
 
-### 6. Orchestration (Makefile)
+### 5. Orchestration (Makefile)
 
 The Makefile reads `repos.conf` and operates across every child repo:
 
@@ -139,7 +144,7 @@ The power of `repos.conf` + `Makefile` together:
 
 This isn't a build system — it's a coordination tool. Each child project has its own build process (npm, cargo, gradle, whatever). The Makefile just knows how to find them and call `make build` in each one. The convention that every project has a Makefile with `build`, `test`, and `run` targets is what makes this work.
 
-### 7. Child project context
+### 6. Child project context
 
 Each child project gets its own context file (CLAUDE.md or equivalent) that covers:
 - What this project does (in one paragraph)
